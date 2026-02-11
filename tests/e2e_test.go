@@ -60,3 +60,13 @@ var _ = Describe("Cluster", func() {
 		Expect(len(nss.Items)).To(BeNumerically(">", 0))
 	})
 })
+
+var _ = Describe("API Intensive", func() {
+	It("should complete the kube-burner api-intensive workload", func() {
+		workDir, err := filepath.Abs(apiIntensiveSubdir)
+		Expect(err).NotTo(HaveOccurred())
+
+		err = runKubeBurner(workDir, apiIntensiveConfig)
+		Expect(err).NotTo(HaveOccurred())
+	})
+})
