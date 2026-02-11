@@ -1,0 +1,28 @@
+{{- if .Values.network.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "k8s-bg-load.fullname" . }}-nginx-config
+  labels:
+    {{- include "k8s-bg-load.labels" . | nindent 4 }}
+data:
+  nginx.conf: |
+    worker_processes auto;
+    events {
+        worker_connections 4096;
+    }
+    http {
+        access_log off;
+        error_log /dev/null;
+        sendfile on;
+
+        server {
+            listen 80;
+            client_max_body_size 0;
+
+            location / {
+                return 204;
+            }
+        }
+    }
+{{- end }}

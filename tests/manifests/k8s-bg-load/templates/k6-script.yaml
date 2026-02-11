@@ -1,0 +1,36 @@
+{{- if .Values.network.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "k8s-bg-load.fullname" . }}-k6-script
+  labels:
+    {{- include "k8s-bg-load.labels" . | nindent 4 }}
+data:
+  load-test.js: |
+    import http from 'k6/http';
+
+    const payloadSize = {{ .Values.network.payloadSize }};
+    const payload = 'x'.repeat(payloadSize);
+
+    export const options = {
+      scenarios: {
+        unit_load: {
+          executor: 'constant-arrival-rate',
+          rate: {{ .Values.network.rps }},
+          timeUnit: '1s',
+          duration: '8760h',
+          preAllocatedVUs: 20,
+          maxVUs: 50,
+        },
+      },
+    };
+
+    export default function () {
+      const params = {
+        headers: {
+            'Content-Type': 'application/octet-stream'
+        },
+      };
+      http.post('http://{{ include "k8s-bg-load.fullname" . }}-nginx-sink.{{ .Release.Namespace }}.svc.cluster.local', payload, params);
+    }
+{{- end }}

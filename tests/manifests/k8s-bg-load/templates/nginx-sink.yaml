@@ -1,0 +1,41 @@
+{{- if .Values.network.enabled }}
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: {{ include "k8s-bg-load.fullname" . }}-nginx-sink
+  labels:
+    {{- include "k8s-bg-load.labels" . | nindent 4 }}
+    app.kubernetes.io/component: nginx-sink
+spec:
+  selector:
+    matchLabels:
+      {{- include "k8s-bg-load.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: nginx-sink
+  template:
+    metadata:
+      labels:
+        {{- include "k8s-bg-load.labels" . | nindent 8 }}
+        app.kubernetes.io/component: nginx-sink
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:alpine
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: config-volume
+              mountPath: /etc/nginx/nginx.conf
+              subPath: nginx.conf
+          {{- with .Values.network.nginx.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+      volumes:
+        - name: config-volume
+          configMap:
+            name: {{ include "k8s-bg-load.fullname" . }}-nginx-config
+      tolerations:
+        - key: "node-role.kubernetes.io/control-plane"
+          operator: "Exists"
+          effect: "NoSchedule"
+{{- end }}

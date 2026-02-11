@@ -1,0 +1,11 @@
+compute:
+  enabled: true
+  cpu: "1"
+  memory: "2Gi"
+
+network:
+  enabled: true
+  rps: 100
+  payloadSize: 125000
+  nginx: {}
+  k6: {}

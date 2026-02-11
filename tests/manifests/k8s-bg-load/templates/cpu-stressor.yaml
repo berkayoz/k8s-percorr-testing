@@ -1,0 +1,38 @@
+{{- if .Values.compute.enabled }}
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: {{ include "k8s-bg-load.fullname" . }}-cpu-stressor
+  labels:
+    {{- include "k8s-bg-load.labels" . | nindent 4 }}
+    app.kubernetes.io/component: cpu-stressor
+spec:
+  selector:
+    matchLabels:
+      {{- include "k8s-bg-load.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: cpu-stressor
+  template:
+    metadata:
+      labels:
+        {{- include "k8s-bg-load.labels" . | nindent 8 }}
+        app.kubernetes.io/component: cpu-stressor
+    spec:
+      containers:
+        - name: cpu-stressor
+          image: narmidm/k8s-pod-cpu-stressor:latest
+          args:
+            - "-cpu={{ .Values.compute.cpu }}"
+            - "-duration=10s"
+            - "-forever"
+          resources:
+            requests:
+              cpu: {{ .Values.compute.cpu | quote }}
+              memory: {{ .Values.compute.memory | quote }}
+            limits:
+              cpu: {{ .Values.compute.cpu | quote }}
+              memory: {{ .Values.compute.memory | quote }}
+      tolerations:
+        - key: "node-role.kubernetes.io/control-plane"
+          operator: "Exists"
+          effect: "NoSchedule"
+{{- end }}

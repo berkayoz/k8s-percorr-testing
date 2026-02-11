@@ -1,0 +1,15 @@
+{{- if .Values.network.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "k8s-bg-load.fullname" . }}-nginx-sink
+  labels:
+    {{- include "k8s-bg-load.labels" . | nindent 4 }}
+spec:
+  selector:
+    {{- include "k8s-bg-load.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: nginx-sink
+  ports:
+    - port: 80
+      targetPort: 80
+{{- end }}

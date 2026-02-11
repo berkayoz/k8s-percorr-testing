@@ -1,0 +1,39 @@
+{{- if .Values.network.enabled }}
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: {{ include "k8s-bg-load.fullname" . }}-network-stress-test
+  labels:
+    {{- include "k8s-bg-load.labels" . | nindent 4 }}
+    app.kubernetes.io/component: network-stress-test
+spec:
+  selector:
+    matchLabels:
+      {{- include "k8s-bg-load.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: network-stress-test
+  template:
+    metadata:
+      labels:
+        {{- include "k8s-bg-load.labels" . | nindent 8 }}
+        app.kubernetes.io/component: network-stress-test
+    spec:
+      containers:
+        - name: k6
+          image: grafana/k6:latest
+          command: ["k6", "run", "/scripts/load-test.js"]
+          volumeMounts:
+            - name: script-volume
+              mountPath: /scripts
+          {{- with .Values.network.k6.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+      volumes:
+        - name: script-volume
+          configMap:
+            name: {{ include "k8s-bg-load.fullname" . }}-k6-script
+      tolerations:
+        - key: "node-role.kubernetes.io/control-plane"
+          operator: "Exists"
+          effect: "NoSchedule"
+{{- end }}

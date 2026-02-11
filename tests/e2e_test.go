@@ -2,7 +2,7 @@ package tests
 
 import (
 	"context"
-	"os"
+	"path/filepath"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -17,19 +17,39 @@ var clientset *kubernetes.Clientset
 
 var _ = BeforeSuite(func() {
 	var err error
-	kubeconfig := os.Getenv("KUBECONFIG")
-	if kubeconfig != "" {
-		cfg, err = clientcmd.BuildConfigFromFlags("", kubeconfig)
-	} else {
-		cfg, err = rest.InClusterConfig()
-		if err != nil {
-			cfg, err = clientcmd.BuildConfigFromFlags("", clientcmd.RecommendedHomeFile)
-		}
-	}
+	cfg, err = clientcmd.BuildConfigFromFlags("", clientcmd.RecommendedHomeFile)
 	Expect(err).NotTo(HaveOccurred())
 
 	clientset, err = kubernetes.NewForConfig(cfg)
 	Expect(err).NotTo(HaveOccurred())
+
+	if bgLoad {
+		chartPath, err := filepath.Abs(bgChartSubdir)
+		Expect(err).NotTo(HaveOccurred())
+
+		GinkgoWriter.Printf("Deploying background load (cpu=%s, memory=%s, rps=%d, payloadSize=%d)\n",
+			bgCPU, bgMemory, bgRPS, bgPayloadSize)
+
+		err = helmInstallBgLoad(chartPath)
+		Expect(err).NotTo(HaveOccurred())
+	} else {
+		GinkgoWriter.Println("Background load disabled (--bg-load=false)")
+	}
+})
+
+var _ = AfterSuite(func() {
+	if bgLoad {
+		GinkgoWriter.Println("Cleaning up background load...")
+		if err := helmUninstallBgLoad(); err != nil {
+			GinkgoWriter.Printf("WARNING: Failed to uninstall background load: %v\n", err)
+		}
+		if clientset != nil {
+			err := clientset.CoreV1().Namespaces().Delete(context.TODO(), bgNamespace, metav1.DeleteOptions{})
+			if err != nil {
+				GinkgoWriter.Printf("WARNING: Failed to delete namespace %s: %v\n", bgNamespace, err)
+			}
+		}
+	}
 })
 
 var _ = Describe("Cluster", func() {
