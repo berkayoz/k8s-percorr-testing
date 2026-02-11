@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"context"
 	"fmt"
 	"os/exec"
 
@@ -12,12 +13,12 @@ const (
 	apiIntensiveConfig = "api-intensive.yml"
 )
 
-func runKubeBurner(workDir, configFile string) error {
+func runKubeBurner(ctx context.Context, workDir, configFile string) error {
 	args := []string{
 		"init",
 		"-c", configFile,
 	}
-	cmd := exec.Command("kube-burner", args...)
+	cmd := exec.CommandContext(ctx, "kube-burner", args...)
 	cmd.Dir = workDir
 	cmd.Stdout = GinkgoWriter
 	cmd.Stderr = GinkgoWriter

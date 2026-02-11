@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"context"
 	"fmt"
 	"os/exec"
 
@@ -13,7 +14,7 @@ const (
 	bgChartSubdir = "manifests/k8s-bg-load"
 )
 
-func helmInstallBgLoad(chartDir string) error {
+func helmInstallBgLoad(ctx context.Context, chartDir string) error {
 	args := []string{
 		"upgrade", "--install",
 		bgReleaseName,
@@ -27,25 +28,25 @@ func helmInstallBgLoad(chartDir string) error {
 		"--set", fmt.Sprintf("network.rps=%d", bgRPS),
 		"--set", fmt.Sprintf("network.payloadSize=%d", bgPayloadSize),
 	}
-	cmd := exec.Command("helm", args...)
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("helm install failed: %w\nOutput: %s", err, string(output))
+	cmd := exec.CommandContext(ctx, "helm", args...)
+	cmd.Stdout = GinkgoWriter
+	cmd.Stderr = GinkgoWriter
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("helm install failed: %w", err)
 	}
-	GinkgoWriter.Printf("Background load deployed:\n%s\n", string(output))
 	return nil
 }
 
-func helmUninstallBgLoad() error {
-	cmd := exec.Command("helm", "uninstall", bgReleaseName,
+func helmUninstallBgLoad(ctx context.Context) error {
+	cmd := exec.CommandContext(ctx, "helm", "uninstall", bgReleaseName,
 		"--namespace", bgNamespace,
 		"--wait",
 		"--timeout", "2m",
 	)
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("helm uninstall failed: %w\nOutput: %s", err, string(output))
+	cmd.Stdout = GinkgoWriter
+	cmd.Stderr = GinkgoWriter
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("helm uninstall failed: %w", err)
 	}
-	GinkgoWriter.Printf("Background load removed:\n%s\n", string(output))
 	return nil
 }

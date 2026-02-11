@@ -1,7 +1,6 @@
 package tests
 
 import (
-	"context"
 	"path/filepath"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -15,7 +14,7 @@ import (
 var cfg *rest.Config
 var clientset *kubernetes.Clientset
 
-var _ = BeforeSuite(func() {
+var _ = BeforeSuite(func(ctx SpecContext) {
 	var err error
 	cfg, err = clientcmd.BuildConfigFromFlags("", clientcmd.RecommendedHomeFile)
 	Expect(err).NotTo(HaveOccurred())
@@ -30,21 +29,21 @@ var _ = BeforeSuite(func() {
 		GinkgoWriter.Printf("Deploying background load (cpu=%s, memory=%s, rps=%d, payloadSize=%d)\n",
 			bgCPU, bgMemory, bgRPS, bgPayloadSize)
 
-		err = helmInstallBgLoad(chartPath)
+		err = helmInstallBgLoad(ctx, chartPath)
 		Expect(err).NotTo(HaveOccurred())
 	} else {
 		GinkgoWriter.Println("Background load disabled (--bg-load=false)")
 	}
 })
 
-var _ = AfterSuite(func() {
+var _ = AfterSuite(func(ctx SpecContext) {
 	if bgLoad {
 		GinkgoWriter.Println("Cleaning up background load...")
-		if err := helmUninstallBgLoad(); err != nil {
+		if err := helmUninstallBgLoad(ctx); err != nil {
 			GinkgoWriter.Printf("WARNING: Failed to uninstall background load: %v\n", err)
 		}
 		if clientset != nil {
-			err := clientset.CoreV1().Namespaces().Delete(context.TODO(), bgNamespace, metav1.DeleteOptions{})
+			err := clientset.CoreV1().Namespaces().Delete(ctx, bgNamespace, metav1.DeleteOptions{})
 			if err != nil {
 				GinkgoWriter.Printf("WARNING: Failed to delete namespace %s: %v\n", bgNamespace, err)
 			}
@@ -53,20 +52,20 @@ var _ = AfterSuite(func() {
 })
 
 var _ = Describe("Cluster", func() {
-	It("should have at least one node or namespace", func() {
+	It("should have at least one node or namespace", func(ctx SpecContext) {
 		// Check namespaces as a light-weight verification
-		nss, err := clientset.CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})
+		nss, err := clientset.CoreV1().Namespaces().List(ctx, metav1.ListOptions{})
 		Expect(err).NotTo(HaveOccurred())
 		Expect(len(nss.Items)).To(BeNumerically(">", 0))
 	})
 })
 
 var _ = Describe("API Intensive", func() {
-	It("should complete the kube-burner api-intensive workload", func() {
+	It("should complete the kube-burner api-intensive workload", func(ctx SpecContext) {
 		workDir, err := filepath.Abs(apiIntensiveSubdir)
 		Expect(err).NotTo(HaveOccurred())
 
-		err = runKubeBurner(workDir, apiIntensiveConfig)
+		err = runKubeBurner(ctx, workDir, apiIntensiveConfig)
 		Expect(err).NotTo(HaveOccurred())
 	})
 })

@@ -9,9 +9,9 @@ global:
 
 jobs:
   - name: api-intensive
-    jobIterations: 100
-    qps: 4
-    burst: 4
+    jobIterations: 50
+    qps: 8
+    burst: 8
     namespacedIterations: true
     namespace: api-intensive
     podWait: false
@@ -30,8 +30,8 @@ jobs:
   - name: api-intensive-patch
     jobType: patch
     jobIterations: 10
-    qps: 2
-    burst: 2
+    qps: 4
+    burst: 4
     objects:
       - kind: Deployment
         objectTemplate: templates/deployment_patch_add_label.json
@@ -50,8 +50,8 @@ jobs:
         apiVersion: apps/v1
 
   - name: api-intensive-remove
-    qps: 2
-    burst: 2
+    qps: 4
+    burst: 4
     jobType: delete
     waitForDeletion: true
     objects:
@@ -69,8 +69,8 @@ jobs:
         labelSelector: {kube-burner.io/job: api-intensive}
 
   - name: remove-services
-    qps: 2
-    burst: 2
+    qps: 4
+    burst: 4
     jobType: delete
     waitForDeletion: true
     objects:
@@ -78,8 +78,8 @@ jobs:
         labelSelector: {kube-burner.io/job: api-intensive}
 
   - name: remove-configmaps-secrets
-    qps: 2
-    burst: 2
+    qps: 4
+    burst: 4
     jobType: delete
     objects:
       - kind: ConfigMap
