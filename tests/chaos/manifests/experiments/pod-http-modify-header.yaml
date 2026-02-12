@@ -1,0 +1,24 @@
+---
+apiVersion: litmuschaos.io/v1alpha1
+kind: ChaosEngine
+metadata:
+  name: pod-http-modify-header
+  namespace: litmus
+spec:
+  engineState: 'active'
+  appinfo:
+    appns: "litmus"
+    applabel: "app=nginx"
+    appkind: "deployment"
+  chaosServiceAccount: litmus-superuser
+  experiments:
+    - name: pod-http-modify-header
+      spec:
+        components:
+          env:
+            - name: TARGET_SERVICE_PORT
+              value: "80"
+            - name: HEADERS_MAP
+              value: '{"X-Litmus-Test-Header": "X-Litmus-Test-Value"}'
+            - name: HEADER_MODE
+              value: 'response'

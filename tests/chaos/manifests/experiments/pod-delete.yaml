@@ -1,0 +1,15 @@
+---
+apiVersion: litmuschaos.io/v1alpha1
+kind: ChaosEngine
+metadata:
+  name: pod-delete
+  namespace: litmus
+spec:
+  appinfo:
+    appns: "litmus"
+    applabel: "app=nginx"
+    appkind: "deployment"
+  engineState: 'active'
+  chaosServiceAccount: litmus-superuser
+  experiments:
+    - name: pod-delete

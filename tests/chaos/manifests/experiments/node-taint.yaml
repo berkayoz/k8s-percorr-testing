@@ -1,0 +1,18 @@
+---
+apiVersion: litmuschaos.io/v1alpha1
+kind: ChaosEngine
+metadata:
+  name: node-taint
+  namespace: litmus
+spec:
+  engineState: 'active'
+  chaosServiceAccount: litmus-superuser
+  experiments:
+    - name: node-taint
+      spec:
+        components:
+          env:
+            - name: NODE_LABEL
+              value: 'node-role.kubernetes.io/worker='
+            - name: TAINTS
+              value: 'app.hce.io/chaos=true:NoSchedule'

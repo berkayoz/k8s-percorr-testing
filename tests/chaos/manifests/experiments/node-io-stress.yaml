@@ -1,0 +1,16 @@
+---
+apiVersion: litmuschaos.io/v1alpha1
+kind: ChaosEngine
+metadata:
+  name: node-io-stress
+  namespace: litmus
+spec:
+  engineState: 'active'
+  chaosServiceAccount: litmus-superuser
+  experiments:
+    - name: node-io-stress
+      spec:
+        components:
+          env:
+            - name: NODE_LABEL
+              value: 'node-role.kubernetes.io/worker='

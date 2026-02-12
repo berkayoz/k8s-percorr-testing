@@ -3,12 +3,12 @@ package tests
 import (
 	"path/filepath"
 
+	"github.com/canonical/k8s-percorr-testing/pkg/k8sutil"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/clientcmd"
 )
 
 var cfg *rest.Config
@@ -16,10 +16,7 @@ var clientset *kubernetes.Clientset
 
 var _ = BeforeSuite(func(ctx SpecContext) {
 	var err error
-	cfg, err = clientcmd.BuildConfigFromFlags("", clientcmd.RecommendedHomeFile)
-	Expect(err).NotTo(HaveOccurred())
-
-	clientset, err = kubernetes.NewForConfig(cfg)
+	cfg, clientset, err = k8sutil.NewDefaultClientset()
 	Expect(err).NotTo(HaveOccurred())
 
 	if bgLoad {
@@ -39,7 +36,8 @@ var _ = BeforeSuite(func(ctx SpecContext) {
 var _ = AfterSuite(func(ctx SpecContext) {
 	if bgLoad {
 		GinkgoWriter.Println("Cleaning up background load...")
-		if err := helmUninstallBgLoad(ctx); err != nil {
+		if err := r.Cmd(ctx, "helm", "uninstall", bgReleaseName,
+			"--namespace", bgNamespace, "--wait", "--timeout", "2m"); err != nil {
 			GinkgoWriter.Printf("WARNING: Failed to uninstall background load: %v\n", err)
 		}
 		if clientset != nil {
@@ -60,12 +58,3 @@ var _ = Describe("Cluster", func() {
 	})
 })
 
-var _ = Describe("API Intensive", func() {
-	It("should complete the kube-burner api-intensive workload", func(ctx SpecContext) {
-		workDir, err := filepath.Abs(apiIntensiveSubdir)
-		Expect(err).NotTo(HaveOccurred())
-
-		err = runKubeBurner(ctx, workDir, apiIntensiveConfig)
-		Expect(err).NotTo(HaveOccurred())
-	})
-})

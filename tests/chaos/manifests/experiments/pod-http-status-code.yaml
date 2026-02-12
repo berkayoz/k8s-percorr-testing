@@ -1,0 +1,24 @@
+---
+apiVersion: litmuschaos.io/v1alpha1
+kind: ChaosEngine
+metadata:
+  name: pod-http-status-code
+  namespace: litmus
+spec:
+  engineState: 'active'
+  appinfo:
+    appns: "litmus"
+    applabel: "app=nginx"
+    appkind: "deployment"
+  chaosServiceAccount: litmus-superuser
+  experiments:
+    - name: pod-http-status-code
+      spec:
+        components:
+          env:
+            - name: TARGET_SERVICE_PORT
+              value: "80"
+            - name: STATUS_CODE
+              value: '500'
+            - name: "MODIFY_RESPONSE_BODY"
+              value: "true"

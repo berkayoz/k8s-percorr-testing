@@ -1,0 +1,15 @@
+---
+apiVersion: litmuschaos.io/v1alpha1
+kind: ChaosEngine
+metadata:
+  name: pod-memory-hog
+  namespace: litmus
+spec:
+  engineState: 'active'
+  appinfo:
+    appns: "litmus"
+    applabel: "app=nginx"
+    appkind: "deployment"
+  chaosServiceAccount: litmus-superuser
+  experiments:
+    - name: pod-memory-hog

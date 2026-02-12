@@ -1,0 +1,16 @@
+---
+apiVersion: litmuschaos.io/v1alpha1
+kind: ChaosEngine
+metadata:
+  name: docker-service-kill
+  namespace: litmus
+spec:
+  engineState: 'active'
+  chaosServiceAccount: litmus-superuser
+  experiments:
+    - name: docker-service-kill
+      spec:
+        components:
+          env:
+            - name: NODE_LABEL
+              value: 'node-role.kubernetes.io/worker='

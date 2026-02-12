@@ -1,0 +1,22 @@
+---
+apiVersion: litmuschaos.io/v1alpha1
+kind: ChaosEngine
+metadata:
+  name: pod-http-latency
+  namespace: litmus
+spec:
+  engineState: 'active'
+  appinfo:
+    appns: "litmus"
+    applabel: "app=nginx"
+    appkind: "deployment"
+  chaosServiceAccount: litmus-superuser
+  experiments:
+    - name: pod-http-latency
+      spec:
+        components:
+          env:
+            - name: TARGET_SERVICE_PORT
+              value: "80"
+            - name: LATENCY
+              value: '2000'

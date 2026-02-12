@@ -1,0 +1,20 @@
+---
+apiVersion: litmuschaos.io/v1alpha1
+kind: ChaosEngine
+metadata:
+  name: pod-dns-spoof
+  namespace: litmus
+spec:
+  appinfo:
+    appns: "litmus"
+    applabel: "app=nginx"
+    appkind: "deployment"
+  engineState: "active"
+  chaosServiceAccount: litmus-superuser
+  experiments:
+    - name: pod-dns-spoof
+      spec:
+        components:
+          env:
+            - name: SPOOF_MAP
+              value: '{"google.com":"fakegoogle.com"}'
