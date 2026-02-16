@@ -16,5 +16,5 @@ const (
 )
 
 func runKubeBurner(ctx context.Context, workDir, configFile string) error {
-	return r.CmdWithDir(ctx, workDir, "kube-burner", "init", "-c", configFile)
+	return r.CmdWithDir(ctx, workDir, "kube-burner", "init", "--skip-log-file", "-c", configFile)
 }

@@ -98,8 +98,11 @@ var _ = Describe("Litmus Chaos", Ordered, Serial, func() {
 	},
 		Entry(nil, "container-kill"),
 		Entry(nil, "disk-fill"),
-		Entry(nil, "docker-service-kill"),
-		Entry(nil, "kubelet-service-kill"),
+		// Following tests are disabled due to mismatch in service names used in the experiments.
+		// They either fail or perform nothing, currently there is no way to specify the correct service name.
+		// e.g. kubelet.service instead of snap.k8s.kubelet.service
+		// Entry(nil, "docker-service-kill"),
+		// Entry(nil, "kubelet-service-kill"),
 		Entry(nil, "node-cpu-hog"),
 		Entry(nil, "node-io-stress"),
 		Entry(nil, "node-memory-hog"),

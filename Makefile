@@ -1,6 +1,6 @@
 MODULE?=github.com/canonical/k8s-percorr-testing
 
-.PHONY: test test-no-bg test-api-intensive test-chaos test-all fmt
+.PHONY: test test-no-bg test-kube-burner test-chaos test-all fmt
 
 test:
 	ginkgo -v --timeout 30m ./tests
@@ -8,7 +8,7 @@ test:
 test-no-bg:
 	ginkgo -v --timeout 30m ./tests -- --bg-load=false
 
-test-api-intensive:
+test-kube-burner:
 	ginkgo -v --timeout 30m ./tests/kubeburner
 
 test-chaos:
