@@ -1,4 +1,4 @@
-package tests
+package kubeburner
 
 import (
 	"testing"
@@ -7,7 +7,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func TestE2E(t *testing.T) {
+func TestKubeburner(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "E2E Suite")
+	RunSpecs(t, "KubeBurner Suite")
 }

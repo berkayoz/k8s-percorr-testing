@@ -5,7 +5,7 @@ import (
 	"flag"
 	"os"
 
-	"github.com/canonical/k8s-percorr-testing/pkg/run"
+	"github.com/canonical/k8s-percorr-testing/internal/run"
 	. "github.com/onsi/ginkgo/v2"
 )
 
@@ -29,10 +29,8 @@ func sonobuoyResults(ctx context.Context, tarball string) ([]byte, error) {
 	return r.CmdOutput(ctx, "sonobuoy", "results", tarball)
 }
 
-func sonobuoyDelete(ctx context.Context) {
-	if err := r.Cmd(ctx, "sonobuoy", "delete", "--wait"); err != nil {
-		GinkgoWriter.Printf("WARNING: Failed to delete sonobuoy resources: %v\n", err)
-	}
+func sonobuoyDelete(ctx context.Context) error {
+	return r.Cmd(ctx, "sonobuoy", "delete", "--wait")
 }
 
 func getResultsDir() (string, error) {

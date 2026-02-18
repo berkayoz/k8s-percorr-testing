@@ -3,7 +3,7 @@ package chaos
 import (
 	"context"
 
-	"github.com/canonical/k8s-percorr-testing/pkg/run"
+	"github.com/canonical/k8s-percorr-testing/internal/run"
 	. "github.com/onsi/ginkgo/v2"
 )
 
@@ -11,9 +11,9 @@ var r = run.New(GinkgoWriter)
 
 // Chaos / Litmus constants.
 const (
-	chaosExperimentsSubdir  = "manifests/experiments"
-	chaosNginxManifest      = "manifests/nginx.yaml"
-	chaosSuperuserManifest  = "manifests/superuser.yaml"
+	chaosExperimentsSubdir  = "testdata/experiments"
+	chaosNginxManifest      = "testdata/nginx.yaml"
+	chaosSuperuserManifest  = "testdata/superuser.yaml"
 	chaosNamespace          = "litmus"
 	chaosReleaseName        = "litmus"
 	chaosHelmRepo           = "https://litmuschaos.github.io/litmus-helm/"
@@ -45,15 +45,11 @@ func helmInstallLitmus(ctx context.Context) error {
 	)
 }
 
-func helmUninstallLitmus(ctx context.Context) {
-	// Uninstall experiments chart first
+func helmUninstallLitmus(ctx context.Context) error {
 	if err := r.Cmd(ctx, "helm", "uninstall", chaosExperimentsRelease,
 		"--namespace", chaosNamespace, "--wait", "--timeout", "2m"); err != nil {
-		GinkgoWriter.Printf("WARNING: Failed to uninstall experiments chart: %v\n", err)
+		return err
 	}
-	// Then uninstall operator
-	if err := r.Cmd(ctx, "helm", "uninstall", chaosReleaseName,
-		"--namespace", chaosNamespace, "--wait", "--timeout", "2m"); err != nil {
-		GinkgoWriter.Printf("WARNING: Failed to uninstall Litmus: %v\n", err)
-	}
+	return r.Cmd(ctx, "helm", "uninstall", chaosReleaseName,
+		"--namespace", chaosNamespace, "--wait", "--timeout", "2m")
 }

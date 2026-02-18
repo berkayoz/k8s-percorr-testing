@@ -1,11 +1,11 @@
-package tests
+package e2e
 
 import (
 	"context"
 	"flag"
 	"fmt"
 
-	"github.com/canonical/k8s-percorr-testing/pkg/run"
+	"github.com/canonical/k8s-percorr-testing/internal/run"
 	. "github.com/onsi/ginkgo/v2"
 )
 
@@ -32,7 +32,7 @@ func init() {
 const (
 	bgReleaseName = "bg-load"
 	bgNamespace   = "bg-load"
-	bgChartSubdir = "manifests/k8s-bg-load"
+	bgChartSubdir = "testdata/k8s-bg-load"
 )
 
 // --- Helm helpers ---

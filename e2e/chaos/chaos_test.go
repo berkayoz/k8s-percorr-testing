@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/canonical/k8s-percorr-testing/pkg/k8sutil"
+	"github.com/canonical/k8s-percorr-testing/internal/k8sutil"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -32,44 +32,35 @@ var _ = BeforeSuite(func(ctx SpecContext) {
 	superuserManifest, err := filepath.Abs(chaosSuperuserManifest)
 	Expect(err).NotTo(HaveOccurred())
 
-	// Install Litmus via Helm
-	GinkgoWriter.Println("Installing Litmus operator via Helm...")
+	By("installing Litmus operator via Helm")
 	err = helmInstallLitmus(ctx)
 	Expect(err).NotTo(HaveOccurred())
 
-	// Deploy superuser
-	GinkgoWriter.Println("Deploying superuser...")
+	By("deploying superuser")
 	err = r.Cmd(ctx, "kubectl", "apply", "-f", superuserManifest)
 	Expect(err).NotTo(HaveOccurred())
 
-	// Deploy nginx target application
-	GinkgoWriter.Println("Deploying nginx target application...")
+	By("deploying nginx target application")
 	err = r.Cmd(ctx, "kubectl", "apply", "-f", nginxManifest)
 	Expect(err).NotTo(HaveOccurred())
 
-	// Wait for nginx deployment rollout
-	GinkgoWriter.Println("Waiting for nginx deployment rollout...")
+	By("waiting for nginx deployment rollout")
 	err = r.Cmd(ctx, "kubectl", "rollout", "status",
 		"deployment/nginx-deployment", "-n", chaosNamespace, "--timeout=2m")
 	Expect(err).NotTo(HaveOccurred())
 })
 
 var _ = AfterSuite(func(ctx SpecContext) {
-	// Delete nginx target
-	if err := r.Cmd(ctx, "kubectl", "delete", "-f", nginxManifest, "--ignore-not-found"); err != nil {
-		GinkgoWriter.Printf("WARNING: Failed to delete nginx: %v\n", err)
-	}
+	err := r.Cmd(ctx, "kubectl", "delete", "-f", nginxManifest, "--ignore-not-found")
+	Expect(err).NotTo(HaveOccurred())
 
-	// Uninstall Litmus (both charts)
-	GinkgoWriter.Println("Uninstalling Litmus...")
-	helmUninstallLitmus(ctx)
+	By("uninstalling Litmus")
+	err = helmUninstallLitmus(ctx)
+	Expect(err).NotTo(HaveOccurred())
 
-	// Delete namespace
 	if clientset != nil {
-		err := clientset.CoreV1().Namespaces().Delete(ctx, chaosNamespace, metav1.DeleteOptions{})
-		if err != nil {
-			GinkgoWriter.Printf("WARNING: Failed to delete namespace %s: %v\n", chaosNamespace, err)
-		}
+		err = clientset.CoreV1().Namespaces().Delete(ctx, chaosNamespace, metav1.DeleteOptions{})
+		Expect(err).NotTo(HaveOccurred())
 	}
 })
 
@@ -79,13 +70,13 @@ var _ = Describe("Litmus Chaos", Ordered, Serial, func() {
 		chaosResultName := fmt.Sprintf("%s-%s", experiment, experiment)
 
 		DeferCleanup(func(ctx SpecContext) {
-			GinkgoWriter.Printf("[%s] Cleaning up...\n", experiment)
+			By("cleaning up")
 			r.Cmd(ctx, "kubectl", "delete", "-f", experimentFile, "--ignore-not-found", "--wait")
 			r.Cmd(ctx, "kubectl", "delete", "chaosresults", chaosResultName,
 				"-n", chaosNamespace, "--ignore-not-found", "--wait")
 		})
 
-		GinkgoWriter.Printf("[%s] Applying %s.yaml...\n", experiment, experiment)
+		By("applying experiment")
 		err := r.Cmd(ctx, "kubectl", "apply", "-f", experimentFile)
 		Expect(err).NotTo(HaveOccurred())
 
