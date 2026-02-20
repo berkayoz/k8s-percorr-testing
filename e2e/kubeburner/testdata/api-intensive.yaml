@@ -1,4 +1,9 @@
 ---
+metricsEndpoints:
+  - indexer:
+      type: local
+      metricsDirectory: collected-metrics
+
 global:
   measurements:
     - name: podLatency

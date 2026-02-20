@@ -9,6 +9,42 @@ import (
 
 var r = run.New(GinkgoWriter)
 
+// experiments lists all active Litmus chaos experiment names.
+// This slice is the single source of truth for both test Entry generation
+// and result collection.
+var experiments = []string{
+	"container-kill",
+	"disk-fill",
+	// Following require symlinking services to correct names,
+	// e.g. kubelet.service -> snap.k8s.kubelet.service
+	// docker.service -> snap.k8s.containerd.service
+	"docker-service-kill",
+	"kubelet-service-kill",
+	"node-cpu-hog",
+	"node-io-stress",
+	"node-memory-hog",
+	"node-taint",
+	"pod-autoscaler",
+	"pod-cpu-hog",
+	"pod-cpu-hog-exec",
+	"pod-delete",
+	"pod-dns-error",
+	"pod-dns-spoof",
+	"pod-http-latency",
+	"pod-http-modify-body",
+	"pod-http-modify-header",
+	"pod-http-reset-peer",
+	"pod-http-status-code",
+	"pod-io-stress",
+	"pod-memory-hog",
+	"pod-memory-hog-exec",
+	"pod-network-corruption",
+	"pod-network-duplication",
+	"pod-network-latency",
+	"pod-network-loss",
+	"pod-network-partition",
+}
+
 // Chaos / Litmus constants.
 const (
 	chaosExperimentsSubdir  = "testdata/experiments"

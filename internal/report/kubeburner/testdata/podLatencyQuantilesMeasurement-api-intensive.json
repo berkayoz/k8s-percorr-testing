@@ -1,0 +1,38 @@
+[
+  {
+    "quantileName": "PodScheduled",
+    "P50": 4,
+    "P95": 12,
+    "P99": 18,
+    "max": 22,
+    "avg": 5.3,
+    "jobName": "api-intensive"
+  },
+  {
+    "quantileName": "Initialized",
+    "P50": 4,
+    "P95": 12,
+    "P99": 18,
+    "max": 22,
+    "avg": 5.3,
+    "jobName": "api-intensive"
+  },
+  {
+    "quantileName": "ContainersReady",
+    "P50": 2897,
+    "P95": 3510,
+    "P99": 3774,
+    "max": 3774,
+    "avg": 2876.3,
+    "jobName": "api-intensive"
+  },
+  {
+    "quantileName": "Ready",
+    "P50": 2897,
+    "P95": 3510,
+    "P99": 3774,
+    "max": 3774,
+    "avg": 2876.3,
+    "jobName": "api-intensive"
+  }
+]

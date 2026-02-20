@@ -1,0 +1,21 @@
+name: e2e
+status: passed
+meta:
+  type: summary
+items:
+- name: junit_01.xml
+  status: passed
+  items:
+  - name: Kubernetes e2e suite
+    status: passed
+    items:
+    - name: "[sig-api-machinery] Aggregator Should be able to support the 1.17 Sample API Server"
+      status: passed
+    - name: "[sig-apps] Daemon set should run and stop simple daemon"
+      status: passed
+    - name: "[sig-network] Services should serve a basic endpoint from pods"
+      status: passed
+    - name: "[sig-node] ConfigMap should fail to create ConfigMap with empty key"
+      status: failed
+    - name: "[sig-storage] Volumes should be able to mount a projected volume"
+      status: skipped

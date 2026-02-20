@@ -1,0 +1,35 @@
+# kube-burner Performance Report
+
+**Generated**: {{ .Timestamp }}
+**Config**: {{ .ConfigFile }}
+
+## Description
+
+This report presents the results of a **kube-burner** performance workload that
+stress-tests the Kubernetes API server. The workload creates, patches, and deletes
+resources at a controlled rate (QPS) and measures API throughput and pod lifecycle
+latency.
+
+**Success criteria**: All jobs must report a PASS status. Key metrics to evaluate:
+- **Achieved QPS** should be close to the configured QPS (indicates the API server kept up with the request rate)
+- **Pod latency P99** should remain within acceptable bounds for the cluster's SLO (lower is better)
+
+## Job Summary
+
+| Job | Type | Iterations | QPS | Status | Elapsed | Achieved QPS |
+|-----|------|-----------|-----|--------|---------|--------------|
+{{- range .Jobs }}
+| {{ .JobConfig.Name }} | {{ .JobConfig.JobType }} | {{ .JobConfig.Iterations }} | {{ printf "%.0f" .JobConfig.QPS }} | {{ if .Passed }}PASS{{ else }}FAIL{{ end }} | {{ printf "%.1fs" .Elapsed }} | {{ printf "%.1f" .AchievedQPS }} |
+{{- end }}
+{{ if .Latencies }}
+## Pod Latency (Quantiles)
+{{ range .Latencies }}
+### {{ .JobName }}
+
+| Phase | P50 (ms) | P95 (ms) | P99 (ms) | Max (ms) | Avg (ms) |
+|-------|----------|----------|----------|----------|----------|
+{{- range .Quantiles }}
+| {{ .QuantileName }} | {{ .P50 }} | {{ .P95 }} | {{ .P99 }} | {{ .Max }} | {{ printf "%.1f" .Avg }} |
+{{- end }}
+{{ end }}
+{{- end }}

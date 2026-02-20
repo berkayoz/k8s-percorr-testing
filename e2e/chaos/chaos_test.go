@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/canonical/k8s-percorr-testing/internal/k8sutil"
+	"github.com/canonical/k8s-percorr-testing/internal/report"
+	chaosreport "github.com/canonical/k8s-percorr-testing/internal/report/chaos"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -16,6 +18,7 @@ var (
 	chaosTestsDir string
 	nginxManifest string
 	clientset     *kubernetes.Clientset
+	reportsDir    string
 )
 
 var _ = BeforeSuite(func(ctx SpecContext) {
@@ -30,6 +33,9 @@ var _ = BeforeSuite(func(ctx SpecContext) {
 	Expect(err).NotTo(HaveOccurred())
 
 	superuserManifest, err := filepath.Abs(chaosSuperuserManifest)
+	Expect(err).NotTo(HaveOccurred())
+
+	reportsDir, err = report.Dir()
 	Expect(err).NotTo(HaveOccurred())
 
 	By("installing Litmus operator via Helm")
@@ -51,7 +57,32 @@ var _ = BeforeSuite(func(ctx SpecContext) {
 })
 
 var _ = AfterSuite(func(ctx SpecContext) {
-	err := r.Cmd(ctx, "kubectl", "delete", "-f", nginxManifest, "--ignore-not-found")
+	By("generating chaos report")
+	var results []chaosreport.ExperimentResult
+	for _, exp := range experiments {
+		chaosResultName := fmt.Sprintf("%s-%s", exp, exp)
+		data, err := r.CmdOutput(ctx, "kubectl", "get", "chaosresult", chaosResultName,
+			"-n", chaosNamespace, "-o", "json")
+		if err != nil {
+			// Skip experiments whose ChaosResult doesn't exist.
+			continue
+		}
+
+		result, err := chaosreport.ParseResult(exp, data)
+		Expect(err).NotTo(HaveOccurred())
+		results = append(results, result)
+	}
+
+	err := chaosreport.GenerateToFile(results,
+		filepath.Join(reportsDir, "chaos-report.md"))
+	Expect(err).NotTo(HaveOccurred())
+
+	By("cleaning up chaos results")
+	err = r.Cmd(ctx, "kubectl", "delete", "chaosresults", "--all",
+		"-n", chaosNamespace)
+	Expect(err).NotTo(HaveOccurred())
+
+	err = r.Cmd(ctx, "kubectl", "delete", "-f", nginxManifest, "--ignore-not-found")
 	Expect(err).NotTo(HaveOccurred())
 
 	By("uninstalling Litmus")
@@ -64,6 +95,15 @@ var _ = AfterSuite(func(ctx SpecContext) {
 	}
 })
 
+// experimentEntries builds []TableEntry from the shared experiments list.
+func experimentEntries() []TableEntry {
+	entries := make([]TableEntry, 0, len(experiments))
+	for _, e := range experiments {
+		entries = append(entries, Entry(nil, e))
+	}
+	return entries
+}
+
 var _ = Describe("Litmus Chaos", Ordered, Serial, func() {
 	DescribeTable("should pass", func(ctx SpecContext, experiment string) {
 		experimentFile := filepath.Join(chaosTestsDir, fmt.Sprintf("%s.yaml", experiment))
@@ -72,8 +112,6 @@ var _ = Describe("Litmus Chaos", Ordered, Serial, func() {
 		DeferCleanup(func(ctx SpecContext) {
 			By("cleaning up")
 			r.Cmd(ctx, "kubectl", "delete", "-f", experimentFile, "--ignore-not-found", "--wait")
-			r.Cmd(ctx, "kubectl", "delete", "chaosresults", chaosResultName,
-				"-n", chaosNamespace, "--ignore-not-found", "--wait")
 		})
 
 		By("applying experiment")
@@ -87,35 +125,7 @@ var _ = Describe("Litmus Chaos", Ordered, Serial, func() {
 			return string(data)
 		}).WithContext(ctx).WithTimeout(10 * time.Minute).WithPolling(10 * time.Second).Should(Equal("Pass"))
 	},
-		Entry(nil, "container-kill"),
-		Entry(nil, "disk-fill"),
-		// Following tests are disabled due to mismatch in service names used in the experiments.
-		// They either fail or perform nothing, currently there is no way to specify the correct service name.
-		// e.g. kubelet.service instead of snap.k8s.kubelet.service
-		// Entry(nil, "docker-service-kill"),
-		// Entry(nil, "kubelet-service-kill"),
-		Entry(nil, "node-cpu-hog"),
-		Entry(nil, "node-io-stress"),
-		Entry(nil, "node-memory-hog"),
-		Entry(nil, "node-taint"),
-		Entry(nil, "pod-autoscaler"),
-		Entry(nil, "pod-cpu-hog"),
-		Entry(nil, "pod-cpu-hog-exec"),
-		Entry(nil, "pod-delete"),
-		Entry(nil, "pod-dns-error"),
-		Entry(nil, "pod-dns-spoof"),
-		Entry(nil, "pod-http-latency"),
-		Entry(nil, "pod-http-modify-body"),
-		Entry(nil, "pod-http-modify-header"),
-		Entry(nil, "pod-http-reset-peer"),
-		Entry(nil, "pod-http-status-code"),
-		Entry(nil, "pod-io-stress"),
-		Entry(nil, "pod-memory-hog"),
-		Entry(nil, "pod-memory-hog-exec"),
-		Entry(nil, "pod-network-corruption"),
-		Entry(nil, "pod-network-duplication"),
-		Entry(nil, "pod-network-latency"),
-		Entry(nil, "pod-network-loss"),
-		Entry(nil, "pod-network-partition"),
+		experimentEntries(),
 	)
+
 })

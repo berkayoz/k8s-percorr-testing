@@ -2,8 +2,6 @@ package conformance
 
 import (
 	"context"
-	"flag"
-	"os"
 
 	"github.com/canonical/k8s-percorr-testing/internal/run"
 	. "github.com/onsi/ginkgo/v2"
@@ -11,31 +9,18 @@ import (
 
 var r = run.New(GinkgoWriter)
 
-var resultsDir string
-
-func init() {
-	flag.StringVar(&resultsDir, "results-dir", "", "Directory to store sonobuoy results (defaults to a temp dir)")
-}
-
 func sonobuoyRun(ctx context.Context) error {
-	return r.Cmd(ctx, "sonobuoy", "run", "--mode=certified-conformance", "--wait")
+	return r.Cmd(ctx, "sonobuoy", "run", "--mode=quick", "--wait")
 }
 
 func sonobuoyRetrieve(ctx context.Context, destDir string) ([]byte, error) {
 	return r.CmdOutput(ctx, "sonobuoy", "retrieve", destDir)
 }
 
-func sonobuoyResults(ctx context.Context, tarball string) ([]byte, error) {
-	return r.CmdOutput(ctx, "sonobuoy", "results", tarball)
+func sonobuoyDumpResults(ctx context.Context, tarball string) ([]byte, error) {
+	return r.CmdOutput(ctx, "sonobuoy", "results", tarball, "--mode", "dump", "--plugin", "e2e")
 }
 
 func sonobuoyDelete(ctx context.Context) error {
 	return r.Cmd(ctx, "sonobuoy", "delete", "--wait")
-}
-
-func getResultsDir() (string, error) {
-	if resultsDir != "" {
-		return resultsDir, nil
-	}
-	return os.MkdirTemp("", "sonobuoy-results-*")
 }

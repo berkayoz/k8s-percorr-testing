@@ -1,0 +1,16 @@
+{
+  "apiVersion": "litmuschaos.io/v1alpha1",
+  "kind": "ChaosResult",
+  "metadata": {
+    "name": "pod-network-loss-pod-network-loss",
+    "namespace": "litmus"
+  },
+  "status": {
+    "experimentStatus": {
+      "verdict": "Fail",
+      "phase": "Completed",
+      "failStep": "ChaosInject",
+      "probeSuccessPercentage": "0"
+    }
+  }
+}

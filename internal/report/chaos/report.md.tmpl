@@ -1,0 +1,32 @@
+# Chaos Testing Report
+
+**Generated**: {{ .Timestamp }}
+**Total Experiments**: {{ .TotalCount }}
+
+## Description
+
+This report presents the results of **Litmus Chaos** experiments run against a
+Kubernetes cluster to evaluate system resilience. Each experiment injects a specific
+fault (e.g. pod deletion, network latency, CPU/memory stress, DNS errors) into a
+target workload and observes whether the system recovers correctly.
+
+**Success criteria**: Each experiment's ChaosResult verdict must be "Pass" with a
+probe success percentage of 100%, indicating the system handled the injected fault
+as expected.
+
+## Summary
+
+| Metric | Value |
+|--------|-------|
+| Total | {{ .TotalCount }} |
+| Passed | {{ .PassedCount }} |
+| Failed | {{ .FailedCount }} |
+| Pass Rate | {{ printf "%.1f" .PassRate }}% |
+
+## Experiment Results
+
+| Experiment | Verdict | Probe Success % | Fail Step |
+|------------|---------|-----------------|-----------|
+{{- range .Results }}
+| {{ .Name }} | {{ .Verdict }} | {{ .ProbeSuccessPercentage }} | {{ .FailStep }} |
+{{- end }}

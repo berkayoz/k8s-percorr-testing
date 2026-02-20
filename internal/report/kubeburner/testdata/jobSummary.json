@@ -1,0 +1,41 @@
+[
+  {
+    "achievedQps": 7.8,
+    "elapsedTime": 32.5,
+    "jobConfig": {
+      "name": "api-intensive",
+      "jobType": "create",
+      "jobIterations": 50,
+      "qps": 8,
+      "burst": 8
+    },
+    "passed": true,
+    "metricName": "jobSummary"
+  },
+  {
+    "achievedQps": 3.9,
+    "elapsedTime": 8.2,
+    "jobConfig": {
+      "name": "api-intensive-patch",
+      "jobType": "patch",
+      "jobIterations": 10,
+      "qps": 4,
+      "burst": 4
+    },
+    "passed": true,
+    "metricName": "jobSummary"
+  },
+  {
+    "achievedQps": 3.8,
+    "elapsedTime": 5.1,
+    "jobConfig": {
+      "name": "api-intensive-remove",
+      "jobType": "delete",
+      "jobIterations": 1,
+      "qps": 4,
+      "burst": 4
+    },
+    "passed": true,
+    "metricName": "jobSummary"
+  }
+]

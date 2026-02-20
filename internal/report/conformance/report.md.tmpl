@@ -1,0 +1,31 @@
+# CNCF Conformance Report
+
+**Generated**: {{ .Timestamp }}
+
+## Description
+
+This report presents the results of the **CNCF Kubernetes Conformance** test suite,
+executed via [Sonobuoy](https://sonobuoy.io) in certified-conformance mode.
+The suite runs the official Kubernetes end-to-end conformance tests that validate
+whether a distribution meets the CNCF conformance requirements.
+
+**Success criteria**: All conformance tests must pass. Any test with status "failed"
+indicates a conformance gap.
+
+## Summary
+
+| Metric | Value |
+|--------|-------|
+| Total | {{ .TotalCount }} |
+| Passed | {{ .PassedCount }} |
+| Failed | {{ .FailedCount }} |
+| Skipped | {{ .SkippedCount }} |
+{{ if .Failures }}
+## Failures
+
+| Test Name |
+|-----------|
+{{- range .Failures }}
+| {{ .Name }} |
+{{- end }}
+{{ end }}
