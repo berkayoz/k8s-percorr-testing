@@ -15,10 +15,11 @@ import (
 )
 
 var (
-	chaosTestsDir string
-	nginxManifest string
-	clientset     *kubernetes.Clientset
-	reportsDir    string
+	chaosTestsDir          string
+	nginxManifest          string
+	serviceSymlinksManifest string
+	clientset              *kubernetes.Clientset
+	reportsDir             string
 )
 
 var _ = BeforeSuite(func(ctx SpecContext) {
@@ -44,6 +45,18 @@ var _ = BeforeSuite(func(ctx SpecContext) {
 
 	By("deploying superuser")
 	err = r.Cmd(ctx, "kubectl", "apply", "-f", superuserManifest)
+	Expect(err).NotTo(HaveOccurred())
+
+	serviceSymlinksManifest, err = filepath.Abs(chaosServiceSymlinksManifest)
+	Expect(err).NotTo(HaveOccurred())
+
+	By("deploying service-symlinks DaemonSet")
+	err = r.Cmd(ctx, "kubectl", "apply", "-f", serviceSymlinksManifest)
+	Expect(err).NotTo(HaveOccurred())
+
+	By("waiting for service-symlinks rollout")
+	err = r.Cmd(ctx, "kubectl", "rollout", "status",
+		"daemonset/service-symlinks", "-n", chaosNamespace, "--timeout=2m")
 	Expect(err).NotTo(HaveOccurred())
 
 	By("deploying nginx target application")
@@ -83,6 +96,10 @@ var _ = AfterSuite(func(ctx SpecContext) {
 	Expect(err).NotTo(HaveOccurred())
 
 	err = r.Cmd(ctx, "kubectl", "delete", "-f", nginxManifest, "--ignore-not-found")
+	Expect(err).NotTo(HaveOccurred())
+
+	By("cleaning up service-symlinks DaemonSet")
+	err = r.Cmd(ctx, "kubectl", "delete", "-f", serviceSymlinksManifest, "--ignore-not-found")
 	Expect(err).NotTo(HaveOccurred())
 
 	By("uninstalling Litmus")

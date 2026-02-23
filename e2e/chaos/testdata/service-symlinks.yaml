@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: service-symlinks
+  namespace: litmus
+spec:
+  selector:
+    matchLabels:
+      app: service-symlinks
+  template:
+    metadata:
+      labels:
+        app: service-symlinks
+    spec:
+      nodeSelector:
+        node-role.kubernetes.io/worker: ""
+      tolerations:
+        - operator: Exists
+      hostPID: true
+      containers:
+        - name: symlinker
+          image: alpine:3.21
+          command:
+            - nsenter
+            - "-t"
+            - "1"
+            - "-m"
+            - "--"
+            - sh
+            - "-c"
+            - |
+              set -e
+
+              SERVICES="docker.service:snap.k8s.containerd.service kubelet.service:snap.k8s.kubelet.service"
+
+              for pair in $SERVICES; do
+                link="${pair%%:*}"
+                target="${pair##*:}"
+                if ! systemctl list-unit-files "$target" >/dev/null 2>&1; then
+                  echo "WARNING: $target not found, skipping $link"
+                  continue
+                fi
+                ln -sf "/etc/systemd/system/$target" "/etc/systemd/system/$link"
+                echo "Symlinked $link -> $target"
+              done
+
+              systemctl daemon-reload
+              echo "daemon-reload complete, sleeping"
+              exec sleep infinity
+          securityContext:
+            privileged: true

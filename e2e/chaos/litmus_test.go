@@ -47,9 +47,10 @@ var experiments = []string{
 
 // Chaos / Litmus constants.
 const (
-	chaosExperimentsSubdir  = "testdata/experiments"
-	chaosNginxManifest      = "testdata/nginx.yaml"
-	chaosSuperuserManifest  = "testdata/superuser.yaml"
+	chaosExperimentsSubdir      = "testdata/experiments"
+	chaosNginxManifest          = "testdata/nginx.yaml"
+	chaosSuperuserManifest      = "testdata/superuser.yaml"
+	chaosServiceSymlinksManifest = "testdata/service-symlinks.yaml"
 	chaosNamespace          = "litmus"
 	chaosReleaseName        = "litmus"
 	chaosHelmRepo           = "https://litmuschaos.github.io/litmus-helm/"
