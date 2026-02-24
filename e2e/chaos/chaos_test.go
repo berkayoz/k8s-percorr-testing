@@ -5,27 +5,21 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/canonical/k8s-percorr-testing/internal/k8sutil"
 	"github.com/canonical/k8s-percorr-testing/internal/report"
 	chaosreport "github.com/canonical/k8s-percorr-testing/internal/report/chaos"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
 )
 
 var (
-	chaosTestsDir          string
-	nginxManifest          string
+	chaosTestsDir           string
+	nginxManifest           string
 	serviceSymlinksManifest string
-	clientset              *kubernetes.Clientset
-	reportsDir             string
+	reportsDir              string
 )
 
 var _ = BeforeSuite(func(ctx SpecContext) {
 	var err error
-	_, clientset, err = k8sutil.NewDefaultClientset()
-	Expect(err).NotTo(HaveOccurred())
 
 	chaosTestsDir, err = filepath.Abs(chaosExperimentsSubdir)
 	Expect(err).NotTo(HaveOccurred())
@@ -106,10 +100,8 @@ var _ = AfterSuite(func(ctx SpecContext) {
 	err = helmUninstallLitmus(ctx)
 	Expect(err).NotTo(HaveOccurred())
 
-	if clientset != nil {
-		err = clientset.CoreV1().Namespaces().Delete(ctx, chaosNamespace, metav1.DeleteOptions{})
-		Expect(err).NotTo(HaveOccurred())
-	}
+	err = r.Cmd(ctx, "kubectl", "delete", "namespace", chaosNamespace, "--ignore-not-found")
+	Expect(err).NotTo(HaveOccurred())
 })
 
 // experimentEntries builds []TableEntry from the shared experiments list.
