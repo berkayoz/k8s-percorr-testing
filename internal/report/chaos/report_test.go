@@ -58,9 +58,13 @@ func TestGenerate(t *testing.T) {
 		"| Failed | 1 |",
 		"66.7%",
 		"## Experiment Results",
-		"| container-kill | Pass |",
-		"| disk-fill | Pass |",
-		"| pod-network-loss | Fail |",
+		"| Description |",
+		"[container-kill](https://litmuschaos.github.io/litmus/experiments/categories/pods/container-kill/)",
+		"Kills the application container and validates recovery",
+		"[disk-fill](https://litmuschaos.github.io/litmus/experiments/categories/pods/disk-fill/)",
+		"Fills the ephemeral storage of a pod to test disk pressure handling",
+		"[pod-network-loss](https://litmuschaos.github.io/litmus/experiments/categories/pods/pod-network-loss/)",
+		"| Fail |",
 		"| ChaosInject |",
 	}
 	for _, s := range mustContain {

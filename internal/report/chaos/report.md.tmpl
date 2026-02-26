@@ -25,8 +25,8 @@ as expected.
 
 ## Experiment Results
 
-| Experiment | Verdict | Probe Success % | Fail Step |
-|------------|---------|-----------------|-----------|
+| Experiment | Description | Verdict | Probe Success % | Fail Step |
+|------------|-------------|---------|-----------------|-----------|
 {{- range .Results }}
-| {{ .Name }} | {{ .Verdict }} | {{ .ProbeSuccessPercentage }} | {{ .FailStep }} |
+| {{ if .URL }}[{{ .Name }}]({{ .URL }}){{ else }}{{ .Name }}{{ end }} | {{ .Description }} | {{ .Verdict }} | {{ .ProbeSuccessPercentage }} | {{ .FailStep }} |
 {{- end }}
