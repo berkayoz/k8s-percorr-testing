@@ -19,7 +19,6 @@ indicates a conformance gap.
 | Total | {{ .TotalCount }} |
 | Passed | {{ .PassedCount }} |
 | Failed | {{ .FailedCount }} |
-| Skipped | {{ .SkippedCount }} |
 {{ if .Failures }}
 ## Failures
 
@@ -29,3 +28,10 @@ indicates a conformance gap.
 | {{ .Name }} |
 {{- end }}
 {{ end }}
+## Test Results
+
+| Test Name | Status |
+|-----------|--------|
+{{- range .Results }}
+| {{ .Name }} | {{ .Status }} |
+{{- end }}

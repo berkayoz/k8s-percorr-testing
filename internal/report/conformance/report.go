@@ -5,6 +5,7 @@ import (
 	_ "embed"
 	"fmt"
 	"io"
+	"strings"
 	"text/template"
 	"time"
 
@@ -15,18 +16,29 @@ import (
 
 // reportData is the top-level data passed to the Markdown template.
 type reportData struct {
-	Timestamp    string
-	TotalCount   int
-	PassedCount  int
-	FailedCount  int
-	SkippedCount int
-	Failures     []results.Item
+	Timestamp   string
+	TotalCount  int
+	PassedCount int
+	FailedCount int
+	Results     []results.Item
+	Failures    []results.Item
 }
 
 //go:embed report.md.tmpl
 var markdownTemplate string
 
 var tmpl = template.Must(template.New("conformance-report").Parse(markdownTemplate))
+
+// suiteLifecyclePrefixes are Ginkgo suite setup/teardown node name prefixes
+// that are not actual test cases and should be excluded from the report.
+var suiteLifecyclePrefixes = []string{
+	"[BeforeSuite]",
+	"[AfterSuite]",
+	"[SynchronizedBeforeSuite]",
+	"[SynchronizedAfterSuite]",
+	"[ReportBeforeSuite]",
+	"[ReportAfterSuite]",
+}
 
 // ParseDumpResults parses the YAML output of
 // `sonobuoy results --mode dump <tarball>` and returns the first document
@@ -54,32 +66,46 @@ func GenerateToFile(item *results.Item, outputPath string) error {
 }
 
 // buildReportData computes summary statistics and filters for failures.
+// Only passed and failed test cases are counted; skipped tests and Ginkgo
+// suite lifecycle nodes (BeforeSuite, AfterSuite, etc.) are excluded.
 func buildReportData(item *results.Item) *reportData {
-	var passed, failed, skipped int
-	var failures []results.Item
+	var passed, failed int
+	var all, failures []results.Item
 
 	item.Walk(func(i *results.Item) error {
 		if !i.IsLeaf() {
 			return nil
 		}
+		if isSuiteLifecycleNode(i.Name) {
+			return nil
+		}
 		switch i.Status {
 		case results.StatusPassed:
 			passed++
+			all = append(all, *i)
 		case results.StatusFailed:
 			failed++
+			all = append(all, *i)
 			failures = append(failures, *i)
-		default:
-			skipped++
 		}
 		return nil
 	})
 
 	return &reportData{
-		Timestamp:    time.Now().UTC().Format("2006-01-02 15:04:05 UTC"),
-		TotalCount:   passed + failed + skipped,
-		PassedCount:  passed,
-		FailedCount:  failed,
-		SkippedCount: skipped,
-		Failures:     failures,
+		Timestamp:   time.Now().UTC().Format("2006-01-02 15:04:05 UTC"),
+		TotalCount:  passed + failed,
+		PassedCount: passed,
+		FailedCount: failed,
+		Results:     all,
+		Failures:    failures,
 	}
+}
+
+func isSuiteLifecycleNode(name string) bool {
+	for _, prefix := range suiteLifecyclePrefixes {
+		if strings.HasPrefix(name, prefix) {
+			return true
+		}
+	}
+	return false
 }

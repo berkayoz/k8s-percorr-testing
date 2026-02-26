@@ -50,10 +50,14 @@ func TestGenerate(t *testing.T) {
 		Name:   "e2e",
 		Status: results.StatusPassed,
 		Items: []results.Item{
+			{Name: "[ReportBeforeSuite]", Status: results.StatusPassed},
+			{Name: "[SynchronizedBeforeSuite]", Status: results.StatusPassed},
 			{Name: "test-a", Status: results.StatusPassed},
 			{Name: "test-b", Status: results.StatusPassed},
 			{Name: "test-c", Status: results.StatusFailed},
 			{Name: "test-d", Status: results.StatusSkipped},
+			{Name: "[SynchronizedAfterSuite]", Status: results.StatusPassed},
+			{Name: "[ReportAfterSuite] Kubernetes e2e suite report", Status: results.StatusPassed},
 		},
 	}
 
@@ -66,12 +70,15 @@ func TestGenerate(t *testing.T) {
 
 	mustContain := []string{
 		"# CNCF Conformance Report",
-		"| Total | 4 |",
+		"| Total | 3 |",
 		"| Passed | 2 |",
 		"| Failed | 1 |",
-		"| Skipped | 1 |",
 		"## Failures",
 		"| test-c |",
+		"## Test Results",
+		"| test-a | passed |",
+		"| test-b | passed |",
+		"| test-c | failed |",
 	}
 	for _, s := range mustContain {
 		if !strings.Contains(out, s) {
@@ -79,12 +86,18 @@ func TestGenerate(t *testing.T) {
 		}
 	}
 
-	// Only failures should appear in the table, not passed/skipped tests.
-	if strings.Contains(out, "| test-a |") {
-		t.Error("report should not list passed test in failures table")
+	// Skipped tests should not appear anywhere in the report.
+	if strings.Contains(out, "test-d") {
+		t.Error("report should not include skipped test")
 	}
-	if strings.Contains(out, "| test-d |") {
-		t.Error("report should not list skipped test in failures table")
+	if strings.Contains(out, "Skipped") {
+		t.Error("report should not contain Skipped metric")
+	}
+	// Suite lifecycle nodes should not appear in the report.
+	for _, name := range []string{"BeforeSuite", "AfterSuite", "SynchronizedBeforeSuite", "SynchronizedAfterSuite", "ReportBeforeSuite", "ReportAfterSuite"} {
+		if strings.Contains(out, name) {
+			t.Errorf("report should not include suite lifecycle node %q", name)
+		}
 	}
 }
 
@@ -110,6 +123,16 @@ func TestGenerateNoFailures(t *testing.T) {
 	}
 	if !strings.Contains(out, "| Failed | 0 |") {
 		t.Error("report should show Failed count as 0")
+	}
+	if strings.Contains(out, "Skipped") {
+		t.Error("report should not contain Skipped metric")
+	}
+	// Full test results table should still be present.
+	if !strings.Contains(out, "## Test Results") {
+		t.Error("report should contain Test Results section")
+	}
+	if !strings.Contains(out, "| test-a | passed |") {
+		t.Error("report should list test-a in test results table")
 	}
 }
 
