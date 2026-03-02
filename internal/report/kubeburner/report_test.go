@@ -9,9 +9,9 @@ import (
 )
 
 func TestCollect(t *testing.T) {
-	data, err := collect("testdata")
+	data, err := Collect("testdata")
 	if err != nil {
-		t.Fatalf("collect: %v", err)
+		t.Fatalf("Collect: %v", err)
 	}
 
 	if got := len(data.Jobs); got != 3 {
@@ -36,8 +36,13 @@ func TestCollect(t *testing.T) {
 }
 
 func TestGenerate(t *testing.T) {
+	data, err := Collect("testdata")
+	if err != nil {
+		t.Fatalf("Collect: %v", err)
+	}
+
 	var buf bytes.Buffer
-	if err := Generate("testdata", "api-intensive.yaml", &buf); err != nil {
+	if err := Generate(data, "api-intensive.yaml", &buf); err != nil {
 		t.Fatalf("Generate: %v", err)
 	}
 
@@ -63,10 +68,15 @@ func TestGenerate(t *testing.T) {
 }
 
 func TestGenerateToFile(t *testing.T) {
+	data, err := Collect("testdata")
+	if err != nil {
+		t.Fatalf("Collect: %v", err)
+	}
+
 	dir := t.TempDir()
 	outPath := filepath.Join(dir, "subdir", "report.md")
 
-	if err := GenerateToFile("testdata", "api-intensive.yaml", outPath); err != nil {
+	if err := GenerateToFile(data, "api-intensive.yaml", outPath); err != nil {
 		t.Fatalf("GenerateToFile: %v", err)
 	}
 
@@ -81,7 +91,7 @@ func TestGenerateToFile(t *testing.T) {
 
 func TestCollectMissingSummary(t *testing.T) {
 	dir := t.TempDir()
-	_, err := collect(dir)
+	_, err := Collect(dir)
 	if err == nil {
 		t.Fatal("expected error for missing jobSummary.json")
 	}

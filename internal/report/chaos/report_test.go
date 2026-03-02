@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestParseResult(t *testing.T) {
@@ -38,9 +39,9 @@ func TestParseResult(t *testing.T) {
 
 func TestGenerate(t *testing.T) {
 	results := []ExperimentResult{
-		{Name: "container-kill", Verdict: "Pass", Phase: "Completed", ProbeSuccessPercentage: "100"},
-		{Name: "disk-fill", Verdict: "Pass", Phase: "Completed", ProbeSuccessPercentage: "100"},
-		{Name: "pod-network-loss", Verdict: "Fail", Phase: "Completed", FailStep: "ChaosInject", ProbeSuccessPercentage: "0"},
+		{Name: "container-kill", Verdict: "Pass", Phase: "Completed", ProbeSuccessPercentage: "100", Duration: 2*time.Minute + 30*time.Second},
+		{Name: "disk-fill", Verdict: "Pass", Phase: "Completed", ProbeSuccessPercentage: "100", Duration: 5 * time.Minute},
+		{Name: "pod-network-loss", Verdict: "Fail", Phase: "Completed", FailStep: "ChaosInject", ProbeSuccessPercentage: "0", Duration: 1*time.Minute + 15*time.Second},
 	}
 
 	var buf bytes.Buffer
@@ -58,14 +59,17 @@ func TestGenerate(t *testing.T) {
 		"| Failed | 1 |",
 		"66.7%",
 		"## Experiment Results",
-		"| Description |",
+		"| Duration |",
 		"[container-kill](https://litmuschaos.github.io/litmus/experiments/categories/pods/container-kill/)",
 		"Kills the application container and validates recovery",
+		"2m30s",
 		"[disk-fill](https://litmuschaos.github.io/litmus/experiments/categories/pods/disk-fill/)",
 		"Fills the ephemeral storage of a pod to test disk pressure handling",
+		"5m0s",
 		"[pod-network-loss](https://litmuschaos.github.io/litmus/experiments/categories/pods/pod-network-loss/)",
 		"| Fail |",
 		"| ChaosInject |",
+		"1m15s",
 	}
 	for _, s := range mustContain {
 		if !strings.Contains(out, s) {

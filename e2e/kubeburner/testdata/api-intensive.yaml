@@ -10,6 +10,8 @@ global:
 
 jobs:
   - name: api-intensive
+    # Increase job iterations to increase the test duration and give more time to collect metrics
+    # this scales based on the node count, 50 x number of nodes, so for 10 nodes it will create 500 objects
     jobIterations: 50
     qps: 8
     burst: 8

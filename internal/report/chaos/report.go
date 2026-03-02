@@ -21,6 +21,7 @@ type ExperimentResult struct {
 	Phase                  string
 	FailStep               string
 	ProbeSuccessPercentage string
+	Duration               time.Duration
 }
 
 type experimentInfo struct {
@@ -83,7 +84,13 @@ type reportData struct {
 //go:embed report.md.tmpl
 var markdownTemplate string
 
-var tmpl = template.Must(template.New("chaos-report").Parse(markdownTemplate))
+var funcMap = template.FuncMap{
+	"fmtDuration": func(d time.Duration) string {
+		return d.Round(time.Second).String()
+	},
+}
+
+var tmpl = template.Must(template.New("chaos-report").Funcs(funcMap).Parse(markdownTemplate))
 
 // ParseResult parses the JSON output of a single ChaosResult object
 // (e.g. `kubectl get chaosresult <name> -o json`) and returns an ExperimentResult.

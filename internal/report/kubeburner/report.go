@@ -44,18 +44,18 @@ type PodLatencyQuantiles struct {
 	JobName      string  `json:"jobName"`
 }
 
-// jobLatency groups quantile rows for a single job.
-type jobLatency struct {
+// JobLatency groups quantile rows for a single job.
+type JobLatency struct {
 	JobName   string
 	Quantiles []PodLatencyQuantiles
 }
 
-// reportData is the top-level data passed to the Markdown template.
-type reportData struct {
+// ReportData is the top-level data passed to the Markdown template.
+type ReportData struct {
 	Timestamp  string
 	ConfigFile string
 	Jobs       []JobSummary
-	Latencies  []jobLatency
+	Latencies  []JobLatency
 }
 
 //go:embed report.md.tmpl
@@ -63,29 +63,24 @@ var markdownTemplate string
 
 var tmpl = template.Must(template.New("report").Parse(markdownTemplate))
 
-// Generate reads kube-burner local-indexer output from metricsDir, renders a
-// Markdown report and writes it to w.
-func Generate(metricsDir, configFile string, w io.Writer) error {
-	data, err := collect(metricsDir)
-	if err != nil {
-		return err
-	}
+// Generate renders a Markdown report from the collected data and writes it to w.
+func Generate(data *ReportData, configFile string, w io.Writer) error {
 	data.ConfigFile = configFile
 	data.Timestamp = time.Now().UTC().Format("2006-01-02 15:04:05 UTC")
 	return tmpl.Execute(w, data)
 }
 
 // GenerateToFile is a convenience wrapper that writes the report to outputPath.
-func GenerateToFile(metricsDir, configFile, outputPath string) error {
+func GenerateToFile(data *ReportData, configFile, outputPath string) error {
 	return report.WriteToFile(outputPath, func(w io.Writer) error {
-		return Generate(metricsDir, configFile, w)
+		return Generate(data, configFile, w)
 	})
 }
 
-// collect reads jobSummary.json and any podLatencyQuantilesMeasurement-*.json
+// Collect reads jobSummary.json and any podLatencyQuantilesMeasurement-*.json
 // files from metricsDir.
-func collect(metricsDir string) (*reportData, error) {
-	data := &reportData{}
+func Collect(metricsDir string) (*ReportData, error) {
+	data := &ReportData{}
 
 	// Job summaries.
 	summaryPath := filepath.Join(metricsDir, "jobSummary.json")
@@ -116,7 +111,7 @@ func collect(metricsDir string) (*reportData, error) {
 		base := filepath.Base(m)
 		jobName := strings.TrimPrefix(base, "podLatencyQuantilesMeasurement-")
 		jobName = strings.TrimSuffix(jobName, ".json")
-		data.Latencies = append(data.Latencies, jobLatency{
+		data.Latencies = append(data.Latencies, JobLatency{
 			JobName:   jobName,
 			Quantiles: quantiles,
 		})

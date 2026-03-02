@@ -5,9 +5,9 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/canonical/k8s-percorr-testing/internal/report"
 	chaosreport "github.com/canonical/k8s-percorr-testing/internal/report/chaos"
 	. "github.com/onsi/ginkgo/v2"
+	"github.com/onsi/ginkgo/v2/types"
 	. "github.com/onsi/gomega"
 )
 
@@ -15,7 +15,6 @@ var (
 	chaosTestsDir           string
 	nginxManifest           string
 	serviceSymlinksManifest string
-	reportsDir              string
 )
 
 var _ = BeforeSuite(func(ctx SpecContext) {
@@ -28,9 +27,6 @@ var _ = BeforeSuite(func(ctx SpecContext) {
 	Expect(err).NotTo(HaveOccurred())
 
 	superuserManifest, err := filepath.Abs(chaosSuperuserManifest)
-	Expect(err).NotTo(HaveOccurred())
-
-	reportsDir, err = report.Dir()
 	Expect(err).NotTo(HaveOccurred())
 
 	By("installing Litmus operator via Helm")
@@ -64,28 +60,8 @@ var _ = BeforeSuite(func(ctx SpecContext) {
 })
 
 var _ = AfterSuite(func(ctx SpecContext) {
-	By("generating chaos report")
-	var results []chaosreport.ExperimentResult
-	for _, exp := range experiments {
-		chaosResultName := fmt.Sprintf("%s-%s", exp, exp)
-		data, err := r.CmdOutput(ctx, "kubectl", "get", "chaosresult", chaosResultName,
-			"-n", chaosNamespace, "-o", "json")
-		if err != nil {
-			// Skip experiments whose ChaosResult doesn't exist.
-			continue
-		}
-
-		result, err := chaosreport.ParseResult(exp, data)
-		Expect(err).NotTo(HaveOccurred())
-		results = append(results, result)
-	}
-
-	err := chaosreport.GenerateToFile(results,
-		filepath.Join(reportsDir, "chaos-report.md"))
-	Expect(err).NotTo(HaveOccurred())
-
 	By("cleaning up chaos results")
-	err = r.Cmd(ctx, "kubectl", "delete", "chaosresults", "--all",
+	err := r.Cmd(ctx, "kubectl", "delete", "chaosresults", "--all",
 		"-n", chaosNamespace)
 	Expect(err).NotTo(HaveOccurred())
 
@@ -104,6 +80,39 @@ var _ = AfterSuite(func(ctx SpecContext) {
 	Expect(err).NotTo(HaveOccurred())
 })
 
+var _ = ReportAfterSuite("chaos markdown report", func(report types.Report) {
+	var results []chaosreport.ExperimentResult
+	for _, spec := range report.SpecReports {
+		for _, entry := range spec.ReportEntries {
+			if entry.Name == "chaos-result" {
+				result, ok := entry.GetRawValue().(chaosreport.ExperimentResult)
+				if !ok {
+					continue
+				}
+				result.Duration = spec.RunTime
+				results = append(results, result)
+			}
+		}
+	}
+
+	if len(results) == 0 {
+		GinkgoWriter.Printf("No chaos results collected, skipping report generation\n")
+		return
+	}
+
+	// Ginkgo resolves --output-dir into the JSONReport path before the
+	// test binary runs, so filepath.Dir gives us the same output directory
+	// used for JSON/JUnit reports. When no --json-report flag is set the
+	// field is empty and filepath.Dir returns ".", writing to cwd.
+	_, rc := GinkgoConfiguration()
+	reportPath := filepath.Join(filepath.Dir(rc.JSONReport), "chaos-report.md")
+	if err := chaosreport.GenerateToFile(results, reportPath); err != nil {
+		GinkgoWriter.Printf("Failed to generate chaos report: %v\n", err)
+		return
+	}
+	GinkgoWriter.Printf("Chaos report written to %s\n", reportPath)
+})
+
 // experimentEntries builds []TableEntry from the shared experiments list.
 func experimentEntries() []TableEntry {
 	entries := make([]TableEntry, 0, len(experiments))
@@ -118,9 +127,26 @@ var _ = Describe("Litmus Chaos", Ordered, Serial, func() {
 		experimentFile := filepath.Join(chaosTestsDir, fmt.Sprintf("%s.yaml", experiment))
 		chaosResultName := fmt.Sprintf("%s-%s", experiment, experiment)
 
+		// Runs LAST (registered first, LIFO order).
 		DeferCleanup(func(ctx SpecContext) {
 			By("cleaning up")
 			r.Cmd(ctx, "kubectl", "delete", "-f", experimentFile, "--ignore-not-found", "--wait")
+		})
+
+		// Runs FIRST (registered second, LIFO order) -- collect ChaosResult before cleanup deletes the manifest.
+		DeferCleanup(func(ctx SpecContext) {
+			data, err := r.CmdOutput(ctx, "kubectl", "get", "chaosresult", chaosResultName,
+				"-n", chaosNamespace, "-o", "json")
+			if err != nil {
+				GinkgoWriter.Printf("Could not collect ChaosResult %s: %v\n", chaosResultName, err)
+				return
+			}
+			result, err := chaosreport.ParseResult(experiment, data)
+			if err != nil {
+				GinkgoWriter.Printf("Could not parse ChaosResult %s: %v\n", chaosResultName, err)
+				return
+			}
+			AddReportEntry("chaos-result", result)
 		})
 
 		By("applying experiment")

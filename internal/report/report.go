@@ -7,15 +7,6 @@ import (
 	"path/filepath"
 )
 
-// Dir returns a "reports" subdirectory under the current working directory.
-func Dir() (string, error) {
-	cwd, err := os.Getwd()
-	if err != nil {
-		return "", err
-	}
-	return filepath.Join(cwd, "reports"), nil
-}
-
 // WriteToFile creates any parent directories for path, opens the file for
 // writing, and delegates the actual content generation to fn.
 func WriteToFile(path string, fn func(io.Writer) error) error {

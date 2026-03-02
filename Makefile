@@ -8,16 +8,28 @@ BG_PAYLOAD_SIZE ?= 125000
 .PHONY: test-kube-burner test-chaos test-conformance test-all fmt deploy-bg-load remove-bg-load
 
 test-kube-burner:
-	ginkgo -v --timeout 30m ./e2e/kubeburner
+	ginkgo -v --timeout 30m \
+		--json-report=kubeburner.json --junit-report=kubeburner-junit.xml \
+		--output-dir=reports \
+		./e2e/kubeburner
 
 test-chaos:
-	ginkgo -v --timeout 6h ./e2e/chaos
+	ginkgo -v --timeout 6h \
+		--json-report=chaos.json --junit-report=chaos-junit.xml \
+		--output-dir=reports \
+		./e2e/chaos
 
 test-conformance:
-	ginkgo -v --timeout 3h ./e2e/conformance
+	ginkgo -v --timeout 3h \
+		--json-report=conformance.json --junit-report=conformance-junit.xml \
+		--output-dir=reports \
+		./e2e/conformance
 
 test-all:
-	ginkgo -v --timeout 9h ./e2e/kubeburner ./e2e/chaos ./e2e/conformance
+	ginkgo -v --timeout 9h \
+		--json-report=all.json --junit-report=all-junit.xml \
+		--output-dir=reports \
+		./e2e/kubeburner ./e2e/chaos ./e2e/conformance
 
 fmt:
 	gofmt -w .

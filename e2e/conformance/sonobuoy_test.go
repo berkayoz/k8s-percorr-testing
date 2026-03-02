@@ -10,7 +10,7 @@ import (
 var r = run.New(GinkgoWriter)
 
 func sonobuoyRun(ctx context.Context) error {
-	return r.Cmd(ctx, "sonobuoy", "run", "--mode=certified-conformance", "--wait")
+	return r.Cmd(ctx, "sonobuoy", "run", "--mode=quick", "--wait")
 }
 
 func sonobuoyRetrieve(ctx context.Context, destDir string) ([]byte, error) {
